@@ -38,7 +38,7 @@ class Ventana(tb.Window):
         btn_productos.grid(row=0, column=0, padx=10, pady=10)
         btn_productos=ttk.Button(self.frame_left, text='Productos', width=15, command=self.ventana_lista_productos)
         btn_productos.grid(row=1, column=0, padx=10, pady=10)
-        btn_clientes=ttk.Button(self.frame_left, text='Clientes', width=15)
+        btn_clientes=ttk.Button(self.frame_left, text='Clientes', width=15, command=self.ventana_lista_clientes)
         btn_clientes.grid(row=2, column=0, padx=10, pady=10)
         btn_ventas=ttk.Button(self.frame_left, text='Ventas', width=15)
         btn_ventas.grid(row=3, column=0, padx=10, pady=10)
@@ -693,6 +693,252 @@ class Ventana(tb.Window):
         except Exception as e:
             # Mostrar mensaje de error
             messagebox.showerror("Modificar Productos", f"Ocurrió un error al modificar el producto: {str(e)}")
+        
+    #============================CLIENTES========================================
+    def ventana_lista_clientes(self):
+        self.frame_lista_clientes=Frame(self.frame_center)
+        self.frame_lista_clientes.grid(row=0, column=0, columnspan=2, sticky=NSEW)
+
+        self.lblframe_botones_listclientes=LabelFrame(self.frame_lista_clientes)
+        self.lblframe_botones_listclientes.grid(row=0, column=0, padx=10, pady=10, sticky=NSEW)
+
+        btn_nuevo_clientes=tb.Button(self.lblframe_botones_listclientes, text='Nuevo', width=15, bootstyle="success", command=self.ventana_nuevo_clientes)
+        btn_nuevo_clientes.grid(row=0, column=0, padx=5, pady=5)
+        btn_modificar_clientes=tb.Button(self.lblframe_botones_listclientes, text='Modificar', width=15, bootstyle="warning", command=self.ventana_modificar_clientes)
+        btn_modificar_clientes.grid(row=0, column=1, padx=5, pady=5)
+        btn_eliminar_clientes=tb.Button(self.lblframe_botones_listclientes, text='Eliminar', width=15, bootstyle="danger")
+        btn_eliminar_clientes.grid(row=0, column=2, padx=5, pady=5)
+
+        self.lblframe_botones_listclientes=LabelFrame(self.frame_lista_clientes)
+        self.lblframe_botones_listclientes.grid(row=1, column=0, padx=10, pady=10, sticky=NSEW)
+
+        self.txt_busqueda_clientes=ttk.Entry(self.lblframe_botones_listclientes, width=100)
+        self.txt_busqueda_clientes.grid(row=0, column=0, padx=5, pady=5)
+        self.txt_busqueda_clientes.bind('<Key>', self.buscar_clientes)
+        
+        #====================================TreeView==========================================
+
+        self.lblframe_tree_listclientes=LabelFrame(self.frame_lista_clientes)
+        self.lblframe_tree_listclientes.grid(row=2, column=0, padx=10, pady=10, sticky=NSEW)
+
+        columnas=("codigo_cliente","nombre", "direccion", "telefono")
+
+        self.tree_lista_clientes=tb.Treeview(self.lblframe_tree_listclientes, columns=columnas, height=17, show='headings', bootstyle='dark')
+        self.tree_lista_clientes.grid(row=0, column=0)
+
+        self.tree_lista_clientes.heading("codigo_cliente", text="Código", anchor=W)
+        self.tree_lista_clientes.heading("nombre", text="Nombre", anchor=W)
+        self.tree_lista_clientes.heading("direccion", text="Dirección", anchor=W)
+        self.tree_lista_clientes.heading("telefono", text="Teléfono", anchor=W)
+
+        #scrolbar
+        tree_scroll_listclientes=tb.Scrollbar(self.frame_lista_clientes, bootstyle='round-succes')
+        tree_scroll_listclientes.grid(row=2, column=1)
+        #configuracion
+        tree_scroll_listclientes.config(command=self.tree_lista_clientes.yview)
+        
+        self.mostrar_clientes()
+    def mostrar_clientes(self):
+        try:
+            #Conectarse a la base de datos
+            conn = ps.connect(
+                dbname="proyecto",
+                user="postgres",
+                password="Yeika123",
+                host="localhost",
+                port="5432"
+            )
+
+            #Crear un cursor
+            cur = conn.cursor()
+            #Limpiar los datos existentes en el Treeview
+            registros=self.tree_lista_clientes.get_children()
+            #Recorrer cada registro
+            for elementos in registros:
+                self.tree_lista_clientes.delete(elementos)
+
+            #Ejecutar la consulta para obtener los clientes
+            cur.execute("SELECT * FROM cliente")
+            # Obtener los resultados
+            datos = cur.fetchall()
+
+            # Recorrer cada fila
+            for row in datos:
+                self.tree_lista_clientes.insert("",0,text=row[0],values=(row[0],row[1],row[2],row[3]))
+
+            # Cerrar el cursor y la conexión
+            conn.commit()
+            conn.close()
+
+        except ps.Error as e:
+            messagebox.showerror("Error de Base de Datos", f"Ocurrió un error al acceder a la base de datos: {e}")
+    def ventana_nuevo_clientes(self):
+        self.frame_nuevo_clientes=Toplevel(self)
+        self.frame_nuevo_clientes.title('Nuevo Cliente')
+        self.centrar_ventana_nuevo_clientes(400, 400)
+        self.frame_nuevo_clientes.resizable(0,0)
+        self.frame_nuevo_clientes.grab_set()
+
+        lblframe_nuevo_clientes=LabelFrame(self.frame_nuevo_clientes)
+        lblframe_nuevo_clientes.grid(row=0, column=0, sticky=NSEW, padx=10, pady=10)
+
+        lbl_codigo_nuevo_clientes=Label(lblframe_nuevo_clientes, text='Código')
+        lbl_codigo_nuevo_clientes.grid(row=1, column=0, padx=10, pady=10)
+        self.txt_codigo_nuevo_clientes=Entry(lblframe_nuevo_clientes, width=40)
+        self.txt_codigo_nuevo_clientes.grid(row=1, column=1, padx=10, pady=10)
+
+        lbl_nombre_nuevo_clientes=Label(lblframe_nuevo_clientes, text='Nombre')
+        lbl_nombre_nuevo_clientes.grid(row=2, column=0, padx=10, pady=10)
+        self.txt_nombre_nuevo_clientes=Entry(lblframe_nuevo_clientes, width=40)
+        self.txt_nombre_nuevo_clientes.grid(row=2, column=1, padx=10, pady=10)
+        
+        lbl_direccion_nuevo_clientes=Label(lblframe_nuevo_clientes, text='Dirección')
+        lbl_direccion_nuevo_clientes.grid(row=3, column=0, padx=10, pady=10)
+        self.txt_direccion_nuevo_clientes=Entry(lblframe_nuevo_clientes, width=40)
+        self.txt_direccion_nuevo_clientes.grid(row=3, column=1, padx=10, pady=10)
+        
+        lbl_telefono_nuevo_clientes=Label(lblframe_nuevo_clientes, text='Teléfono')
+        lbl_telefono_nuevo_clientes.grid(row=4, column=0, padx=10, pady=10)
+        self.txt_telefono_nuevo_clientes=Entry(lblframe_nuevo_clientes, width=40)
+        self.txt_telefono_nuevo_clientes.grid(row=4, column=1, padx=10, pady=10)
+
+        btn_guardar_nuevo_clientes=ttk.Button(lblframe_nuevo_clientes, text='Guardar',width=38, command=self.guardar_clientes)
+        btn_guardar_nuevo_clientes.grid(row=9, column=1, padx=10, pady=10)
+    def guardar_clientes(self):
+        #Validación
+        if (self.txt_codigo_nuevo_clientes.get()=="" 
+            or self.txt_nombre_nuevo_clientes.get()=="" 
+            or self.txt_direccion_nuevo_clientes.get()=="" 
+            or self.txt_telefono_nuevo_clientes.get()==""
+        ):
+           messagebox.showwarning("Guardando clientes", "Algún campo no es valido. Intente nuevamente") 
+           return 
+        try:
+            #Conectarse a la base de datos
+            conn = ps.connect(
+                dbname="proyecto",
+                user="postgres",
+                password="Yeika123",
+                host="localhost",
+                port="5432"
+            )
+
+            #Crear un cursor
+            cur = conn.cursor()
+
+            datos_guardar_clientes = (
+            self.txt_codigo_nuevo_clientes.get(),
+            self.txt_nombre_nuevo_clientes.get(),
+            self.txt_direccion_nuevo_clientes.get(),
+            self.txt_telefono_nuevo_clientes.get()
+            )
+
+            # Ejecutar la consulta para insertar el cliente
+            cur.execute("INSERT INTO cliente VALUES (%s, %s, %s, %s)", datos_guardar_clientes)
+            messagebox.showinfo("Guardando Clientes", "Cliente guardado correctamente")
+            # Cerrar el cursor y la conexión
+            conn.commit()
+            self.frame_nuevo_clientes.destroy()
+            self.ventana_lista_clientes()
+            conn.close()
+
+        except:
+            messagebox.showerror("Guardando Clientes","Ocurrio un error al Guardar CLiente")
+    def centrar_ventana_nuevo_clientes(self, ancho, alto):
+        ventana_ancho=ancho
+        ventana_alto=alto
+        pantalla_ancho=self.frame_right.winfo_screenwidth()
+        pantalla_alto=self.frame_right.winfo_screenheight()
+        coordenadas_x=int((pantalla_ancho/2)-(ventana_ancho/2))
+        coordenadas_y=int((pantalla_alto/2)-(ventana_alto/2))
+        self.frame_nuevo_clientes.geometry("{}x{}+{}+{}".format(ventana_ancho, ventana_alto, coordenadas_x, coordenadas_y))
+    def buscar_clientes(self, event):
+        try:
+            #Conectarse a la base de datos
+            conn = ps.connect(
+                dbname="proyecto",
+                user="postgres",
+                password="Yeika123",
+                host="localhost",
+                port="5432"
+            )
+
+            #Crear un cursor
+            cur = conn.cursor()
+            #Limpiar los datos existentes en el Treeview
+            registros=self.tree_lista_clientes.get_children()
+            #Recorrer cada registro
+            for elementos in registros:
+                self.tree_lista_clientes.delete(elementos)
+
+            #Ejecutar la consulta para obtener los clientes
+            busqueda = self.txt_busqueda_clientes.get() + '%'
+            cur.execute("SELECT * FROM cliente WHERE codigo_cliente LIKE %s", (busqueda,))
+            # Obtener los resultados
+            datos = cur.fetchall()
+
+            # Recorrer cada fila
+            for row in datos:
+                self.tree_lista_clientes.insert("",0,text=row[0],values=(row[0],row[1],row[2],row[3]))
+
+            # Cerrar el cursor y la conexión
+            conn.commit()
+            conn.close()
+
+        except:
+            messagebox.showerror("Búsqueda de Clientes","Ocurrio un error al buscar el cliente")
+    def ventana_modificar_clientes(self):
+        self.clientes_seleccionado=self.tree_lista_clientes.focus()
+
+        self.val_mod_cli=self.tree_lista_clientes.item(self.clientes_seleccionado, 'values')
+
+        if self.val_mod_cli!='':
+            self.frame_modificar_clientes=Toplevel(self)
+            self.frame_modificar_clientes.title('Modificar Cliente')
+            self.frame_modificar_clientes.geometry('500x400')
+            #self.centrar_ventana_modificar_producto(400, 400)
+            self.frame_modificar_clientes.resizable(0,0)
+            self.frame_modificar_clientes.grab_set()
+
+            lblframe_modificar_clientes=LabelFrame(self.frame_modificar_clientes)
+            lblframe_modificar_clientes.grid(row=0, column=0, sticky=NSEW, padx=10, pady=10)
+
+            lbl_codigo_modificar_clientes=Label(lblframe_modificar_clientes, text='Código')
+            lbl_codigo_modificar_clientes.grid(row=1, column=0, padx=10, pady=10)
+            self.txt_codigo_modificar_clientes=Entry(lblframe_modificar_clientes, width=40)
+            self.txt_codigo_modificar_clientes.grid(row=1, column=1, padx=10, pady=10)
+
+            lbl_nombre_modificar_clientes=Label(lblframe_modificar_clientes, text='Nombre')
+            lbl_nombre_modificar_clientes.grid(row=2, column=0, padx=10, pady=10)
+            self.txt_nombre_modificar_clientes=Entry(lblframe_modificar_clientes, width=40)
+            self.txt_nombre_modificar_clientes.grid(row=2, column=1, padx=10, pady=10)
+            
+            lbl_direccion_modificar_clientes=Label(lblframe_modificar_clientes, text='Dirección')
+            lbl_direccion_modificar_clientes.grid(row=3, column=0, padx=10, pady=10)
+            self.txt_direccion_modificar_clientes=Entry(lblframe_modificar_clientes, width=40)
+            self.txt_direccion_modificar_clientes.grid(row=3, column=1, padx=10, pady=10)
+            
+            lbl_telefono_modificar_clientes=Label(lblframe_modificar_clientes, text='Teléfono')
+            lbl_telefono_modificar_clientes.grid(row=8, column=0, padx=10, pady=10)
+            self.txt_telefono_modificar_clientes=Entry(lblframe_modificar_clientes, width=40)
+            self.txt_telefono_modificar_clientes.grid(row=8, column=1, padx=10, pady=10)
+
+            btn_guardar_modificar_clientes=ttk.Button(lblframe_modificar_clientes, text='Modificar',width=38, bootstyle='warning', command=self.modificar_clientes)
+            btn_guardar_modificar_clientes.grid(row=9, column=1, padx=10, pady=10)
+            self.llenar_entrys_modificar_clientes()
+            self.txt_id_modificar_clientes.focus()
+    def llenar_entrys_modificar_clientes(self):
+        #limpiar entrys
+        self.txt_codigo_modificar_clientes.delete(0, END)
+        self.txt_nombre_modificar_clientes.delete(0, END)
+        self.txt_direccion_modificar_clientes.delete(0, END)
+        self.txt_telefono_modificar_clientes.delete(0, END)
+        #llenar entrys
+        self.txt_codigo_modificar_clientes.insert(0, self.val_mod_prod[0])
+        self.txt_codigo_modificar_clientes.config(state='readonly')
+        self.txt_nombre_modificar_clientes.insert(0, self.val_mod_prod[1])
+        self.txt_direccion_modificar_clientes.insert(0, self.val_mod_prod[2])
+        self.txt_telefono_modificar_clientes.insert(0, self.val_mod_prod[3])
         
 def main():
     app=Ventana()
